@@ -18,8 +18,8 @@ const seedAdmin = async () => {
 
     // Create admin user
     const admin = new User({
-      personId: 'ADMIN001',
-      email: 'vidhyass2310@gmail.com',
+      personId: 'ADMIN002',
+      email: 'admin@company.com',
       password: 'admin123', // Change this in production
       role: 'admin'
     });

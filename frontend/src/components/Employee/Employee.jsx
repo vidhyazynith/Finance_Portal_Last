@@ -18,6 +18,7 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
   const [activeTab, setActiveTab] = useState('active');
   const [isGeneratingId, setIsGeneratingId] = useState(false);
   const [formAttempts, setFormAttempts] = useState(0);
+  const [phoneError, setPhoneError] = useState(''); // NEW: Separate state for phone validation
 
   const [formData, setFormData] = useState({
     personId: '',
@@ -153,6 +154,22 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
     }
   }, [success, error]);
 
+  // NEW: Phone validation function
+  const validatePhoneNumber = (phone) => {
+    if (!phone) {
+      setPhoneError('Phone number is required');
+      return false;
+    }
+    
+    if (!isValidPhoneNumber(phone)) {
+      setPhoneError('Please enter a valid phone number for the selected country');
+      return false;
+    }
+    
+    setPhoneError('');
+    return true;
+  };
+
   // Handle update employee
   const handleUpdateEmployee = async (e) => {
     e.preventDefault();
@@ -160,15 +177,14 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
     setError('');
     setSuccess('');
 
+    // Validate phone number
+    if (!validatePhoneNumber(formData.phone)) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const updateData = { ...formData };
-
-      // ✅ Dynamic phone validation (no hardcoding)
-      if (updateData.phone && !isValidPhoneNumber(updateData.phone)) {
-        setError('Please enter a valid phone number for the selected country.');
-        setLoading(false);
-        return;
-      }
 
       // ✅ Remove password field if empty (don't overwrite password)
       if (!updateData.password) {
@@ -181,6 +197,7 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
       setSuccess('✅ Employee updated successfully!');
       setShowAddForm(false);
       setEditingEmployee(null);
+      setPhoneError(''); // Clear phone error on success
 
       await loadEmployees();
 
@@ -201,6 +218,7 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
     try {
       setIsGeneratingId(true);
       setError('');
+      setPhoneError(''); // Clear phone error when opening form
       setFormAttempts(prev => prev + 1);
 
       await loadEmployees();
@@ -265,20 +283,20 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
     setError('');
     setSuccess('');
 
-    try {
-      // ✅ Validate phone number dynamically (no hardcoding)
-      if (formData.phone && !isValidPhoneNumber(formData.phone)) {
-        setError('Please enter a valid phone number for the selected country.');
-        setLoading(false);
-        return;
-      }
+    // Validate phone number
+    if (!validatePhoneNumber(formData.phone)) {
+      setLoading(false);
+      return;
+    }
 
+    try {
       // ✅ Proceed with registration
       const response = await employeeService.registerEmployee(formData);
 
       setSuccess('✅ Employee registered successfully!');
       setShowAddForm(false);
       setEditingEmployee(null);
+      setPhoneError(''); // Clear phone error on success
 
       // ✅ Reload employees list
       await loadEmployees();
@@ -322,6 +340,7 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
       joiningDate: employee.joiningDate ? employee.joiningDate.split('T')[0] : '',
       status: employee.status || 'Active'
     });
+    setPhoneError(''); // Clear phone error when editing
     setShowAddForm(true);
   };
 
@@ -347,12 +366,24 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
       ...formData,
       phone: value
     });
+    
+    // Real-time phone validation
+    if (value) {
+      if (!isValidPhoneNumber(value)) {
+        setPhoneError('Please enter a valid phone number for the selected country');
+      } else {
+        setPhoneError('');
+      }
+    } else {
+      setPhoneError('Phone number is required');
+    }
   };
 
   const handleCloseModal = () => {
     setShowAddForm(false);
     setEditingEmployee(null);
     setError('');
+    setPhoneError(''); // Clear phone error when closing modal
     setFormAttempts(0);
   };
 
@@ -459,7 +490,6 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
           </div>
         </div>
         
-      {/* </div> */}
         <table className="employees-table">
           <thead>
             <tr>
@@ -698,7 +728,7 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="phone">Phone Number *</label>
-                  <div className="phone-input-containers">
+                  <div className="phone-input-container">
                     <PhoneInput
                       international
                       countryCallingCodeEditable={true}
@@ -706,12 +736,15 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
                       value={formData.phone}
                       onChange={handlePhoneChange}
                       placeholder="Enter phone number"
-                      className="custom-phone-inputs"
-                      pattern="\+?[1-9]\d{1,12}"
-                      title="Please enter a valid phone number"
+                      className={`custom-phone-input ${phoneError ? 'invalid-input' : ''}`}
                     />
                   </div>
-                  <small style={{ color: '#64748b' }}>
+                  {phoneError && (
+                    <small className="error-text" style={{ color: '#dc2626', marginTop: '4px' }}>
+                      {phoneError}
+                    </small>
+                  )}
+                  <small style={{ color: '#64748b', marginTop: phoneError ? '2px' : '6px' }}>
                     Select country code and enter phone number
                   </small>
                 </div>
@@ -792,7 +825,7 @@ const EmployeeManagement = ({ onEmployeeUpdate }) => {
                 <button
                   type="submit"
                   className="submit-btn"
-                  disabled={loading || (formData.panNumber && !validatePanNumber(formData.panNumber))}
+                  disabled={loading || (formData.panNumber && !validatePanNumber(formData.panNumber)) || phoneError}
                 >
                   {loading ? 'Saving...' : (editingEmployee ? 'Update Employee' : 'Add Employee')}
                 </button>

@@ -339,7 +339,7 @@
   width: 100%;
 }
 
-.custom-phone-input {
+.customs-phone-input {
   padding: 14px 16px;
   padding-top: 14px !important;
   padding-bottom: 14px !important;
@@ -349,17 +349,17 @@
   transition: all 0.3s ease;
   background-color: white;
   width: 100%;
-  max-width: 231.538px !important;
+  max-width: 266.74px !important;
 }
 
-.custom-phone-input:focus {
+.customs-phone-input:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   background-color: #f8fafc;
 }
 
-.custom-phone-input.disabled {
+.customs-phone-input.disabled {
   background-color: #f9fafb;
   color: #6b7280;
   cursor: not-allowed;
@@ -368,7 +368,7 @@
   padding-bottom: 14px;
 }
 
-.custom-phone-input.error {
+.customs-phone-input.error {
   border-color: #ef4444;
   background-color: #fef2f2;
 }

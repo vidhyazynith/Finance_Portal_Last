@@ -1188,8 +1188,22 @@ export const downloadInvoice = async (req, res) => {
     });
  
     // ===== SIGNATURE SECTION =====
+    // ===== SIGNATURE SECTION =====
     const signatureY = 680;
     const signatureX = pageWidth - 125;
+    const logoWidth = 100;
+    const logoHeight = 50;
+    try {
+        const slogoPath = join(__dirname, 'Sign.png');
+        if (fs.existsSync(slogoPath)) {
+          doc.image(slogoPath, signatureX-20,signatureY-55, {
+            width: logoWidth,
+            height: logoHeight
+          });
+        }
+      } catch (logoError) {
+        console.error("❌ Error loading logo:", logoError);
+      }
    
     doc.fontSize(10).font('Helvetica')
        .text('For Zynith IT Solutions', signatureX - 40, signatureY + 5, {

@@ -174,8 +174,8 @@ const InOutTransactions = ({onTransactionUpdate}) => {
 
   return (
     <div className="transactions-container">
-      <div className="transactions-header">
-      </div>
+      {/* <div className="transactions-header">
+      </div> */}
 
       {/* Success/Error Messages */}
       {successMessage && (

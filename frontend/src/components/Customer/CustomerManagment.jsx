@@ -12,6 +12,7 @@ const CustomerManagment = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'inactive'
+  const [phoneError, setPhoneError] = useState(''); // NEW: Separate state for phone validation
  
   // Form state
   const [form, setForm] = useState({
@@ -45,12 +46,39 @@ const CustomerManagment = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // NEW: Phone validation function
+  const validatePhoneNumber = (phone) => {
+    if (!phone) {
+      setPhoneError('Phone number is required');
+      return false;
+    }
+    
+    if (!isValidPhoneNumber(phone)) {
+      setPhoneError('Please enter a valid phone number for the selected country');
+      return false;
+    }
+    
+    setPhoneError('');
+    return true;
+  };
+
   // Handle phone number change
   const handlePhoneChange = (value) => {
     setForm({
       ...form,
       phone: value
     });
+    
+    // Real-time phone validation
+    if (value) {
+      if (!isValidPhoneNumber(value)) {
+        setPhoneError('Please enter a valid phone number for the selected country');
+      } else {
+        setPhoneError('');
+      }
+    } else {
+      setPhoneError('Phone number is required');
+    }
   };
  
   const handleSubmit = async (e) => {
@@ -59,8 +87,7 @@ const CustomerManagment = () => {
    
     try {
       // Validate phone number
-      if (form.phone && !isValidPhoneNumber(form.phone)) {
-        alert('Please enter a valid phone number for the selected country.');
+      if (!validatePhoneNumber(form.phone)) {
         setLoading(false);
         return;
       }
@@ -89,6 +116,7 @@ const CustomerManagment = () => {
       });
       setShowAddForm(false);
       setEditingCustomer(null);
+      setPhoneError(''); // Clear phone error on success
     } catch (error) {
       alert('Error saving customer: ' + error.message);
     } finally {
@@ -106,6 +134,7 @@ const CustomerManagment = () => {
       customerType: customer.customerType || 'individual'
     });
     setEditingCustomer(customer);
+    setPhoneError(''); // Clear phone error when editing
     setShowAddForm(true);
   };
  
@@ -140,6 +169,7 @@ const CustomerManagment = () => {
     });
     setShowAddForm(false);
     setEditingCustomer(null);
+    setPhoneError(''); // Clear phone error when closing modal
   };
  
   const filteredCustomers = customers.filter(customer =>
@@ -162,11 +192,6 @@ const CustomerManagment = () => {
  
   return (
     <div className="customer-management-container">
-      {/* Single Header Section - Only one instance */}
-      {/* <div className="customer-header"> */}
-        {/* <p>Manage your customers and their information</p> */}
-      {/* </div> */}
- 
       {/* Stats Cards */}
       <div className="customer-stats-grid">
         <div className="customer-stat-card">
@@ -258,15 +283,20 @@ const CustomerManagment = () => {
                   <div className="phone-input-container">
                     <PhoneInput
                       international
-                      countryCallingCodeEditable={true}
+                      countryCallingCodeEditable={false}
                       defaultCountry="IN"
                       value={form.phone}
                       onChange={handlePhoneChange}
                       placeholder="Enter phone number"
-                      className="customer-phone-input"
+                      className={`customer-phone-input ${phoneError ? 'invalid-input' : ''}`}
                     />
                   </div>
-                  <small style={{ color: '#64748b' }}>
+                  {phoneError && (
+                    <small className="error-text" style={{ color: '#dc2626', marginTop: '4px' }}>
+                      {phoneError}
+                    </small>
+                  )}
+                  <small style={{ color: '#64748b', marginTop: phoneError ? '2px' : '6px' }}>
                     Select country code and enter phone number
                   </small>
                 </div>
@@ -310,7 +340,11 @@ const CustomerManagment = () => {
                 <button type="button" className="cancel-btn" onClick={handleCancel}>
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn" disabled={loading}>
+                <button 
+                  type="submit" 
+                  className="submit-btn" 
+                  disabled={loading || phoneError}
+                >
                   {loading ? 'Saving...' : (editingCustomer ? 'Update Customer' : 'Add Customer')}
                 </button>
               </div>

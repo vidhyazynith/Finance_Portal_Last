@@ -733,14 +733,29 @@ doc.font("Helvetica-Bold").fontSize(10).fillColor("black")
 });
  
 
-// Delete payslip by ID
+// Delete payslip by ID - UPDATED VERSION
 router.delete('/payslip/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const payslip = await Payslip.findByIdAndDelete(req.params.id);
+    const payslip = await Payslip.findById(req.params.id);
     if (!payslip) {
       return res.status(404).json({ message: 'Payslip not found' });
     }
-    res.json({ message: 'Payslip deleted successfully' });
+
+    // Get the associated salary record
+    const salary = await Salary.findById(payslip.salaryId);
+    if (salary) {
+      // Update salary status back to 'draft' when payslip is deleted
+      salary.status = 'draft';
+      await salary.save();
+    }
+
+    // Delete the payslip
+    await Payslip.findByIdAndDelete(req.params.id);
+
+    res.json({ 
+      message: 'Payslip deleted successfully and salary status reset to draft',
+      salaryUpdated: !!salary 
+    });
   } catch (error) {
     console.error('Error deleting payslip:', error);
     res.status(500).json({ message: 'Server error while deleting payslip' });

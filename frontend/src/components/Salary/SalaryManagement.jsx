@@ -251,28 +251,38 @@ const SalaryManagement = () => {
   };
  
   const updatePayslipStatusAfterDelete = async (employeeId, month, year) => {
-    try {
-      const salaryRecord = activeSalaries.find(
-        salary =>
-          salary.employeeId === employeeId &&
-          salary.month === month &&
-          salary.year === year
+  try {
+    // Find the salary record that matches the deleted payslip
+    const salaryRecord = activeSalaries.find(
+      salary =>
+        salary.employeeId === employeeId &&
+        salary.month === month &&
+        salary.year === year
+    );
+
+    if (salaryRecord) {
+      // Update the payslip status to show no payslip exists
+      setPayslipStatus(prev => ({
+        ...prev,
+        [salaryRecord._id]: {
+          hasPayslip: false,
+          canGenerate: true
+        }
+      }));
+
+      // Also update the local salary status to 'draft'
+      setActiveSalaries(prev => 
+        prev.map(salary => 
+          salary._id === salaryRecord._id 
+            ? { ...salary, status: 'draft' }
+            : salary
+        )
       );
- 
-      if (salaryRecord) {
-        setPayslipStatus(prev => ({
-          ...prev,
-          [salaryRecord._id]: {
-            hasPayslip: false,
-            canGenerate: true
-          }
-        }));
-      }
-    } catch (error) {
-      console.error('Error updating payslip status after delete:', error);
     }
-  };
- 
+  } catch (error) {
+    console.error('Error updating payslip status after delete:', error);
+  }
+};
   const filterActiveSalaries = activeSalaries.filter(salary => {
     if (!searchTerm) return true;
    
@@ -475,65 +485,69 @@ const handleEmployeeSelect = async (employeeId) => {
   };
  
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
- 
-    try {
-      const isDuplicate = checkDuplicateSalary(
-        formData.employeeId,
-        formData.month,
-        formData.year,
-        editingSalary?._id
-      );
-      if (isDuplicate) {
-        alert('A salary record for this employee for the selected month and year already exists.');
-        setLoading(false);
-        return;
-      }
- 
-      // Round all amounts before submitting
-      const roundedEarnings = formData.earnings.map(earning => ({
-        ...earning,
-        amount: roundAmount(earning.amount)
-      }));
- 
-      const roundedDeductions = formData.deductions.map(deduction => ({
-        ...deduction,
-        amount: roundAmount(deduction.amount)
-      }));
- 
-      const submitData = {
-        ...formData,
-        basicSalary: roundAmount(formData.basicSalary),
-        paidDays: calculatedValues.finalPaidDays,
-        lopDays: calculatedValues.lopDays,
-        earnings: roundedEarnings,
-        deductions: roundedDeductions,
-        status: 'draft'
-      };
- 
-      if (editingSalary) {
-        const isMonthChanged = formData.month !== editingSalary.month || formData.year !== editingSalary.year;
-        await salaryService.updateSalary(editingSalary._id, submitData);
-        if (isMonthChanged) {
-          alert('Salary record updated! Month/Year changed, status reset to draft.');
-        } else {
-          alert('Salary record updated successfully!');
-        }
-      } else {
-        await salaryService.createSalary(submitData);
-        alert('Salary record created successfully!');
-      }
-     
-      setShowSalaryForm(false);
-      resetForm();
-      loadActiveSalaries();
-    } catch (error) {
-      alert(error.response?.data?.message || `Error ${editingSalary ? 'updating' : 'creating'} salary record`);
-    } finally {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    const isDuplicate = checkDuplicateSalary(
+      formData.employeeId,
+      formData.month,
+      formData.year,
+      editingSalary?._id
+    );
+    if (isDuplicate) {
+      alert('A salary record for this employee for the same month and year already exists.');
       setLoading(false);
+      return;
     }
-  };
+
+    // Round all amounts before submitting
+    const roundedEarnings = formData.earnings.map(earning => ({
+      ...earning,
+      amount: roundAmount(earning.amount)
+    }));
+
+    const roundedDeductions = formData.deductions.map(deduction => ({
+      ...deduction,
+      amount: roundAmount(deduction.amount)
+    }));
+
+    // Determine status: if editing a paid record, reset to draft
+    const newStatus = editingSalary && editingSalary.status === 'paid' ? 'draft' : formData.status;
+
+    const submitData = {
+      ...formData,
+      basicSalary: roundAmount(formData.basicSalary),
+      paidDays: calculatedValues.finalPaidDays,
+      lopDays: calculatedValues.lopDays,
+      earnings: roundedEarnings,
+      deductions: roundedDeductions,
+      status: newStatus // Use the determined status
+    };
+
+    if (editingSalary) {
+      await salaryService.updateSalary(editingSalary._id, submitData);
+      
+      let message = 'Salary record updated successfully!';
+      if (editingSalary.status === 'paid') {
+        message = 'Salary record updated! Status reset to DRAFT since you edited a paid record.';
+      }
+      
+      alert(message);
+    } else {
+      await salaryService.createSalary(submitData);
+      alert('Salary record created successfully!');
+    }
+   
+    setShowSalaryForm(false);
+    resetForm();
+    loadActiveSalaries();
+  } catch (error) {
+    alert(error.response?.data?.message || `Error ${editingSalary ? 'updating' : 'creating'} salary record`);
+  } finally {
+    setLoading(false);
+  }
+};
  
   const resetForm = () => {
     setFormData({
@@ -565,7 +579,7 @@ const handleEditSalary = async (salary) => {
     const data = await salaryService.getSalaryById(salary._id);
     const salaryDetails = data.salary;
    
-    // For editing, use the EXACT values from the record
+    // For editing, use the EXACT values from the record but reset status to draft
     setFormData({
       employeeId: salaryDetails.employeeId,
       month: salaryDetails.month,
@@ -577,7 +591,7 @@ const handleEditSalary = async (salary) => {
       leaveTaken: salaryDetails.leaveTaken || 0,
       earnings: salaryDetails.earnings.length > 0 ? salaryDetails.earnings : [{ type: '', amount: 0, percentage: '', calculationType: 'amount' }],
       deductions: salaryDetails.deductions.length > 0 ? salaryDetails.deductions : [{ type: '', amount: 0, percentage: '', calculationType: 'amount' }],
-      status: salaryDetails.status
+      status: 'draft' // Reset status to draft when editing
     });
    
     setSelectedEmployee(salaryDetails.employeeId);
@@ -590,7 +604,7 @@ const handleEditSalary = async (salary) => {
     console.error('Error loading salary details:', error);
     alert('Error loading salary details for editing');
   }
-};
+}
   const handleDeleteSalary = async (salaryId) => {
     if (window.confirm('Are you sure you want to delete this salary record?')) {
       try {
@@ -604,53 +618,69 @@ const handleEditSalary = async (salary) => {
   };
  
   const handleDeletePayslip = async (payslipId) => {
-    if (window.confirm('Are you sure you want to delete this payslip?')) {
-      try {
-        const payslipToDelete = selectedEmployeePayslips.find(p => p._id === payslipId);
-       
-        if (payslipToDelete) {
-          await salaryService.deletePayslip(payslipId);
-         
-          await updatePayslipStatusAfterDelete(
-            selectedEmployeeId,
-            payslipToDelete.month,
-            payslipToDelete.year
-          );
-         
-          const data = await salaryService.getEmployeePayslips(selectedEmployeeId);
-          setSelectedEmployeePayslips(data.payslips);
-         
-          alert('Payslip deleted successfully!');
-        }
-      } catch (error) {
-        alert('Error deleting payslip');
+  if (window.confirm('Are you sure you want to delete this payslip?')) {
+    try {
+      const payslipToDelete = selectedEmployeePayslips.find(p => p._id === payslipId);
+      
+      if (payslipToDelete) {
+        const response = await salaryService.deletePayslip(payslipId);
+        
+        // Refresh the active salaries to get updated status
+        await loadActiveSalaries();
+        
+        await updatePayslipStatusAfterDelete(
+          selectedEmployeeId,
+          payslipToDelete.month,
+          payslipToDelete.year
+        );
+        
+        const data = await salaryService.getEmployeePayslips(selectedEmployeeId);
+        setSelectedEmployeePayslips(data.payslips);
+        
+        alert('Payslip deleted successfully! Salary status reset to DRAFT.');
       }
+    } catch (error) {
+      alert('Error deleting payslip');
     }
-  };
+  }
+};
  
   const handleGeneratePayslip = async (salaryId) => {
-    const salary = activeSalaries.find(s => s._id === salaryId);
-    if (salary && salary.activeStatus !== 'enabled') {
-      alert('Cannot generate payslip for disabled salary records');
-      return;
-    }
-    try {
-      await salaryService.generatePayslip(salaryId);
-      alert('Payslip generated and sent to employee email!');
- 
-      setPayslipStatus(prev => ({
-        ...prev,
-        [salaryId]: {
-          hasPayslip: true,
-          canGenerate: false
-        }
-      }));
- 
-      loadActiveSalaries();
-    } catch (error) {
-      alert(error.response?.data?.message || 'Error generating payslip');
-    }
-  };
+  const salary = activeSalaries.find(s => s._id === salaryId);
+  if (salary && salary.activeStatus !== 'enabled') {
+    alert('Cannot generate payslip for disabled salary records');
+    return;
+  }
+  try {
+    await salaryService.generatePayslip(salaryId);
+    
+    // Update the status to "paid" using existing update route
+    await salaryService.updateSalary(salaryId, { status: 'paid' });
+    
+    alert('Payslip generated and sent to employee email! Status updated to PAID.');
+
+    // Update local state
+    setActiveSalaries(prev => 
+      prev.map(s => 
+        s._id === salaryId 
+          ? { ...s, status: 'paid' }
+          : s
+      )
+    );
+
+    setPayslipStatus(prev => ({
+      ...prev,
+      [salaryId]: {
+        hasPayslip: true,
+        canGenerate: false
+      }
+    }));
+
+    loadActiveSalaries(); // Refresh data
+  } catch (error) {
+    alert(error.response?.data?.message || 'Error generating payslip');
+  }
+};
  
   const handleViewPayslips = async (employeeId) => {
     try {

@@ -201,7 +201,7 @@ const CompanySettings = () => {
                     onChange={handlePhoneChange}
                     placeholder="Enter phone number"
                     disabled={!isEditing}
-                    className={`custom-phone-input ${!isEditing ? 'disabled' : ''} ${errors.phone ? 'error' : ''}`}
+                    className={`customs-phone-input ${!isEditing ? 'disabled' : ''} ${errors.phone ? 'error' : ''}`}
                   />
                 </div>
                 {errors.phone && <span className="error-message">{errors.phone}</span>}

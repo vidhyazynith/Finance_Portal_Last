@@ -78,46 +78,47 @@
   color: inherit;
 }
 
-/* Summary Cards */
+/* Summary Cards - Minimized Size */
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .summary-card {
   display: flex;
   align-items: center;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
   transition: var(--transition);
   background: white;
+  min-height: 80px;
 }
 
 .summary-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: var(--shadow-hover);
 }
 
 .summary-card.income {
-  border-left: 4px solid var(--income-color);
+  border-left: 3px solid var(--income-color);
 }
 
 .summary-card.expense {
-  border-left: 4px solid var(--expense-color);
+  border-left: 3px solid var(--expense-color);
 }
 
 .summary-card.net {
-  border-left: 4px solid var(--primary-color);
+  border-left: 3px solid var(--primary-color);
 }
 
 .card-icon {
-  font-size: 2.5rem;
-  margin-right: 1rem;
-  width: 60px;
-  height: 60px;
+  font-size: 1.5rem;
+  margin-right: 0.75rem;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -141,16 +142,16 @@
 }
 
 .card-content h3 {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--dark-gray);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .amount {
-  font-size: 1.8rem;
+  font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
 }
@@ -613,9 +614,19 @@
   min-height: 80px;
 }
 
-/* File Upload */
+/* File Upload - Fixed Alignment */
 .file-upload-section {
   margin-top: 0.5rem;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  background-color: var(--light-gray);
+  transition: var(--transition);
+}
+
+.file-upload-section:hover {
+  border-color: var(--primary-color);
+  background-color: rgba(52, 152, 219, 0.05);
 }
 
 .file-input {
@@ -623,29 +634,128 @@
 }
 
 .file-upload-label {
-  display: block;
-  padding: 0.75rem;
-  border: 2px dashed var(--border-color);
-  border-radius: var(--border-radius);
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
   cursor: pointer;
-  transition: var(--transition);
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--dark-gray);
+  text-align: center;
+  width: 100%;
 }
 
-.file-upload-label:hover {
-  border-color: var(--primary-color);
-  background-color: rgba(52, 152, 219, 0.05);
+.file-upload-button {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: var(--transition);
+  border: none;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.file-upload-button:hover {
+  background-color: #2980b9;
+  transform: translateY(-1px);
 }
 
 .file-hint {
   font-size: 0.8rem;
   color: var(--dark-gray);
-  margin: 0.5rem 0 0 0;
+  margin: 0;
+  text-align: center;
+  line-height: 1.4;
 }
 
+.file-preview {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: white;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.file-preview-icon {
+  font-size: 1.25rem;
+  color: var(--primary-color);
+}
+
+.file-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-preview-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-preview-size {
+  font-size: 0.75rem;
+  color: var(--dark-gray);
+  margin: 0;
+}
+
+.remove-file-btn {
+  background: none;
+  border: none;
+  color: var(--expense-color);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: var(--transition);
+  font-size: 1rem;
+}
+
+.remove-file-btn:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Form Group Alignment Fix */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+}
+
+.form-group label.required::after {
+  content: " *";
+  color: var(--expense-color);
+}
+
+/* Ensure consistent spacing for all form elements */
+.form-input,
+.form-select,
+.form-textarea,
+.file-upload-section {
+  width: 100%;
+  font-family: inherit;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
 /* Modal Actions */
 .modal-actions {
   padding: 1.5rem 2rem;
@@ -846,6 +956,31 @@
   .actions-cell {
     justify-content: center;
   }
+
+  .summary-cards {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+  }
+  
+  .summary-card {
+    padding: 0.75rem;
+    min-height: 70px;
+  }
+  
+  .card-icon {
+    font-size: 1.25rem;
+    width: 35px;
+    height: 35px;
+    margin-right: 0.5rem;
+  }
+  
+  .card-content h3 {
+    font-size: 0.7rem;
+  }
+  
+  .amount {
+    font-size: 1.1rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -853,10 +988,16 @@
     padding: 0.5rem;
   }
   
+  .summary-cards {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
   .summary-card {
-    flex-direction: column;
-    text-align: center;
-    padding: 1rem;
+    flex-direction: row;
+    text-align: left;
+    padding: 0.75rem;
+    min-height: 65px;
   }
   
   .card-icon {
